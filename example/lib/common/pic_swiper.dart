@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
-import 'package:example/common/utils.dart';
 import 'package:example/main.dart';
 import 'package:extended_image/extended_image.dart';
-import 'package:oktoast/oktoast.dart';
-import 'dart:ui';
+import 'package:ff_annotation_route/ff_annotation_route.dart';
 import 'package:flutter/material.dart' hide Image;
 import 'package:flutter/rendering.dart';
-import 'package:ff_annotation_route/ff_annotation_route.dart';
+import 'package:oktoast/oktoast.dart';
 
 @FFRoute(
     name: "fluttercandies://picswiper",
@@ -17,9 +16,19 @@ import 'package:ff_annotation_route/ff_annotation_route.dart';
     showStatusBar: false,
     pageRouteType: PageRouteType.transparent)
 class PicSwiper extends StatefulWidget {
-  final int index;
-  final List<PicSwiperItem> pics;
-  PicSwiper({this.index, this.pics});
+  int index;
+  List<PicSwiperItem> pics;
+
+  PicSwiper({this.index, this.pics}) {
+    this.index = 0;
+    this.pics = [
+      PicSwiperItem("http://e-shuushuu.net/images/2020-01-31-1017325.jpeg",
+          des: "jpeg静态图"),
+      PicSwiperItem("http://e-shuushuu.net/images/2020-01-31-1017323.gif",
+          des: "gif动图"),
+    ];
+  }
+
   @override
   _PicSwiperState createState() => _PicSwiperState();
 }
@@ -31,6 +40,7 @@ class _PicSwiperState extends State<PicSwiper>
   AnimationController _animationController;
   Animation<double> _animation;
   Function animationListener;
+
 //  CancellationToken _cancelToken;
 //  CancellationToken get cancelToken {
 //    if (_cancelToken == null || _cancelToken.isCanceled)
@@ -82,7 +92,6 @@ class _PicSwiperState extends State<PicSwiper>
                   fit: BoxFit.contain,
                   enableSlideOutPage: true,
                   mode: ExtendedImageMode.gesture,
-                
                   heroBuilderForSlidingPage: (Widget result) {
                     if (index < min(9, widget.pics.length)) {
                       return Hero(
@@ -105,22 +114,24 @@ class _PicSwiperState extends State<PicSwiper>
                     }
                   },
                   initGestureConfigHandler: (state) {
-                    double initialScale = 1.0;
-
-                    if (state.extendedImageInfo != null &&
-                        state.extendedImageInfo.image != null) {
-                      initialScale = initScale(
-                          size: size,
-                          initialScale: initialScale,
-                          imageSize: Size(
-                              state.extendedImageInfo.image.width.toDouble(),
-                              state.extendedImageInfo.image.height.toDouble()));
-                    }
+//                    double initialScale = 1.0;
+//
+//                    if (state.extendedImageInfo != null &&
+//                        state.extendedImageInfo.image != null) {
+//                      initialScale = initScale(
+//                          size: size,
+//                          initialScale: initialScale,
+//                          imageSize: Size(
+//                              state.extendedImageInfo.image.width.toDouble(),
+//                              state.extendedImageInfo.image.height.toDouble()));
+//                    }
                     return GestureConfig(
                         inPageView: true,
-                        initialScale: initialScale,
-                        maxScale: max(initialScale, 5.0),
-                        animationMaxScale: max(initialScale, 5.0),
+                        initialScale: 1.0,
+                        minScale: 1.0,
+                        animationMinScale: 0.8,
+                        maxScale: 5.0,
+                        animationMaxScale: 5.2,
                         initialAlignment: InitialAlignment.center,
                         //you can cache gesture state even though page view page change.
                         //remember call clearGestureDetailsCache() method at the right time.(for example,this page dispose)
@@ -236,7 +247,9 @@ class MySwiperPlugin extends StatelessWidget {
   final List<PicSwiperItem> pics;
   final int index;
   final StreamController<int> reBuild;
+
   MySwiperPlugin(this.pics, this.index, this.reBuild);
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<int>(
@@ -300,5 +313,6 @@ class MySwiperPlugin extends StatelessWidget {
 class PicSwiperItem {
   String picUrl;
   String des;
+
   PicSwiperItem(this.picUrl, {this.des = ""});
 }
