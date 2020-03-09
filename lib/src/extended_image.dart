@@ -1,10 +1,11 @@
 import 'dart:io' show File;
 import 'dart:typed_data';
 
+import 'package:extended_image/src/editor/extended_image_editor.dart';
 import 'package:extended_image/src/extended_image_border_painter.dart';
-import 'package:extended_image/src/gesture/extended_image_gesture.dart';
 import 'package:extended_image/src/extended_image_typedef.dart';
 import 'package:extended_image/src/extended_image_utils.dart';
+import 'package:extended_image/src/gesture/extended_gesture.dart';
 import 'package:extended_image/src/image/extended_raw_image.dart';
 import 'package:extended_image_library/extended_image_library.dart';
 import 'package:flutter/cupertino.dart';
@@ -14,9 +15,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/semantics.dart';
 import 'package:http_client_helper/http_client_helper.dart';
-import 'editor/extended_image_editor.dart';
-import 'gesture/extended_image_slide_page.dart';
-import 'gesture/extended_image_slide_page_handler.dart';
 
 /// extended image base on official
 class ExtendedImage extends StatefulWidget {
@@ -433,7 +431,7 @@ class ExtendedImage extends StatefulWidget {
   ///build Hero only for sliding page
   final HeroBuilderForSlidingPage heroBuilderForSlidingPage;
 
-  /// init EidtConfig when image is ready.
+  /// init EditorConfig when image is ready.
   final InitEditorConfigHandler initEditorConfigHandler;
 
   /// key of ExtendedImageEditor

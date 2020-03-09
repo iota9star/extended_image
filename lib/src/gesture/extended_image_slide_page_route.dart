@@ -1,12 +1,5 @@
-import 'dart:math';
-import 'dart:ui';
+part of 'extended_gesture.dart';
 
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
-
-import '../extended_image_utils.dart';
 
 ///
 ///  create by zmtzawqlp on 2019/6/3

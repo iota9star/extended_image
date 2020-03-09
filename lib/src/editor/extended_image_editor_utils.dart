@@ -352,7 +352,7 @@ class EditorConfig {
 
   /// eidtor mask color base on pointerDown
   /// default: scaffoldBackgroundColor.withOpacity(pointerdown ? 0.4 : 0.8)
-  final EidtorMaskColorHandler eidtorMaskColorHandler;
+  final EditorMaskColorHandler editorMaskColorHandler;
 
   /// hit test region of corner and line
   final double hitTestSize;
@@ -378,7 +378,7 @@ class EditorConfig {
       this.cornerColor,
       this.lineColor,
       this.lineHeight = 0.6,
-      this.eidtorMaskColorHandler,
+      this.editorMaskColorHandler,
       this.hitTestSize = 20.0,
       this.animationDuration = const Duration(milliseconds: 200),
       this.tickerDuration = const Duration(milliseconds: 400),

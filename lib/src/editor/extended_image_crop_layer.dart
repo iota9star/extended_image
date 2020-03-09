@@ -88,7 +88,7 @@ class ExtendedImageCropLayerState extends State<ExtendedImageCropLayer>
     final EditorConfig editConfig = widget.editorConfig;
     final Color cornerColor =
         widget.editorConfig.cornerColor ?? Theme.of(context).primaryColor;
-    final Color maskColor = widget.editorConfig.eidtorMaskColorHandler
+    final Color maskColor = widget.editorConfig.editorMaskColorHandler
             ?.call(context, _pointerDown) ??
         defaultEidtorMaskColorHandler(context, _pointerDown);
     final double gWidth = widget.editorConfig.hitTestSize;

@@ -1,9 +1,4 @@
-import 'dart:math';
-import 'package:extended_image/src/extended_image_typedef.dart';
-import 'package:flutter/material.dart';
-
-import 'extended_image_slide_page.dart';
-import '../extended_image_utils.dart';
+part of 'extended_gesture.dart';
 
 ///
 ///  extended_image_gesture_utils.dart
@@ -25,6 +20,7 @@ class Boundary {
   bool right;
   bool bottom;
   bool top;
+
   Boundary(
       {this.left: false,
       this.right: false,
@@ -63,6 +59,7 @@ class Boundary {
 
 abstract class ExtendedImageGestureState {
   GestureDetails get gestureDetails;
+
   set gestureDetails(GestureDetails value);
 
   GestureConfig get imageGestureConfig;
@@ -84,12 +81,15 @@ class GestureDetails {
   final ActionType actionType;
 
   bool _computeVerticalBoundary = false;
+
   bool get computeVerticalBoundary => _computeVerticalBoundary;
 
   bool _computeHorizontalBoundary = false;
+
   bool get computeHorizontalBoundary => _computeHorizontalBoundary;
 
   Boundary _boundary = Boundary();
+
   Boundary get boundary => _boundary;
 
   //true: user zoom/pan
@@ -217,7 +217,7 @@ class GestureDetails {
 
   Rect calculateFinalDestinationRect(Rect layoutRect, Rect destinationRect) {
     final destinationRectChanged = rawDestinationRect != destinationRect;
-  
+
     rawDestinationRect = destinationRect;
 
     var temp = offset;
@@ -369,11 +369,13 @@ enum InitialAlignment {
 class GestureConfig {
   //the min scale for zooming then animation back to minScale when scale end
   final double animationMinScale;
+
   //min scale
   final double minScale;
 
   //the max scale for zooming then animation back to maxScale when scale end
   final double animationMaxScale;
+
   //max scale
   final double maxScale;
 
@@ -515,8 +517,14 @@ class GestureAnimation {
 
 ///ExtendedImageGesturePage
 
-Color defaultSlidePageBackgroundHandler(
-    {Offset offset, Size pageSize, Color color, SlideAxis pageGestureAxis}) {
+Widget defaultSlidePageBackgroundHandler({
+  Widget child,
+  bool isPop,
+  Offset offset,
+  Size pageSize,
+  Color color,
+  SlideAxis pageGestureAxis,
+}) {
   double opacity = 0.0;
   if (pageGestureAxis == SlideAxis.both) {
     opacity = offset.distance /
@@ -526,7 +534,12 @@ Color defaultSlidePageBackgroundHandler(
   } else if (pageGestureAxis == SlideAxis.vertical) {
     opacity = offset.dy.abs() / (pageSize.height / 2.0);
   }
-  return color.withOpacity(min(1.0, max(1.0 - opacity, 0.0)));
+  return Container(
+    color: isPop
+        ? Colors.transparent
+        : color.withOpacity(min(1.0, max(1.0 - opacity, 0.0))),
+    child: child,
+  );
 }
 
 bool defaultSlideEndHandler(

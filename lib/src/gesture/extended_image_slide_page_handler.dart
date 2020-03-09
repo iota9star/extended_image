@@ -1,8 +1,4 @@
-import 'package:flutter/material.dart';
-
-import 'extended_image_gesture_utils.dart';
-import 'extended_image_slide_page.dart';
-import '../extended_image_utils.dart';
+part of 'extended_gesture.dart';
 
 ///
 ///  create by zmtzawqlp on 2019/6/14
@@ -12,7 +8,9 @@ import '../extended_image_utils.dart';
 class ExtendedImageSlidePageHandler extends StatefulWidget {
   final Widget child;
   final ExtendedImageSlidePageState extendedImageSlidePageState;
+
   ExtendedImageSlidePageHandler(this.child, this.extendedImageSlidePageState);
+
   @override
   ExtendedImageSlidePageHandlerState createState() =>
       ExtendedImageSlidePageHandlerState();
@@ -21,6 +19,7 @@ class ExtendedImageSlidePageHandler extends StatefulWidget {
 class ExtendedImageSlidePageHandlerState
     extends State<ExtendedImageSlidePageHandler> {
   Offset _startingOffset;
+
   @override
   Widget build(BuildContext context) {
     Widget result = GestureDetector(
@@ -47,10 +46,14 @@ class ExtendedImageSlidePageHandlerState
   }
 
   void _handleScaleStart(ScaleStartDetails details) {
+    widget.extendedImageSlidePageState?._touching = true;
+    widget.extendedImageSlidePageState?.slidePageController
+        ?._attachExtendedImageSlidePageHandlerState(this);
     _startingOffset = details.focalPoint;
   }
 
   Offset _updatePageGestureStartingOffset;
+
   void _handleScaleUpdate(ScaleUpdateDetails details) {
     ///whether gesture page
     if (widget.extendedImageSlidePageState != null && details.scale == 1.0) {
@@ -60,18 +63,19 @@ class ExtendedImageSlidePageHandlerState
 
       if (doubleCompare(delta, minGesturePageDelta) > 0) {
         _updatePageGestureStartingOffset ??= details.focalPoint;
-        widget.extendedImageSlidePageState.slide(
-            details.focalPoint - _updatePageGestureStartingOffset,
-            extendedImageSlidePageHandlerState: this);
+        widget.extendedImageSlidePageState?._slide(
+          details.focalPoint - _updatePageGestureStartingOffset,
+        );
       }
     }
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
+    widget.extendedImageSlidePageState?._touching = false;
     if (widget.extendedImageSlidePageState != null &&
         widget.extendedImageSlidePageState.isSliding) {
       _updatePageGestureStartingOffset = null;
-      widget.extendedImageSlidePageState.endSlide();
+      widget.extendedImageSlidePageState?._endSlide();
       return;
     }
   }

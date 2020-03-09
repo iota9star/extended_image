@@ -1,19 +1,16 @@
-import 'package:extended_image/src/gesture/extended_image_gesture_utils.dart';
-import 'package:extended_image/src/gesture/extended_image_gesture_page_view.dart';
-import 'package:extended_image/src/extended_image_utils.dart';
-import 'package:extended_image/src/image/extended_raw_image.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
-import 'extended_image_slide_page.dart';
+part of 'extended_gesture.dart';
 
 /// scale idea from https://github.com/flutter/flutter/blob/master/examples/layers/widgets/gestures.dart
 /// zoom image
 class ExtendedImageGesture extends StatefulWidget {
   final ExtendedImageState extendedImageState;
   final ExtendedImageSlidePageState extendedImageSlidePageState;
+
   ExtendedImageGesture(
-      this.extendedImageState, this.extendedImageSlidePageState);
+    this.extendedImageState,
+    this.extendedImageSlidePageState,
+  );
+
   @override
   _ExtendedImageGestureState createState() => _ExtendedImageGestureState();
 }
@@ -117,6 +114,7 @@ class _ExtendedImageGestureState extends State<ExtendedImageGesture>
   }
 
   void _handleScaleStart(ScaleStartDetails details) {
+    widget.extendedImageSlidePageState?._touching = true;
     _gestureAnimation.stop();
     _normalizedOffset = (details.focalPoint - _gestureDetails.offset) /
         _gestureDetails.totalScale;
@@ -183,9 +181,8 @@ class _ExtendedImageGestureState extends State<ExtendedImageGesture>
       if (doubleCompare(delta, minGesturePageDelta) > 0 && updateGesture) {
         _updateSlidePageStartingOffset ??= details.focalPoint;
         _updateSlidePageImageStartingOffset ??= _gestureDetails.offset;
-        widget.extendedImageSlidePageState.slide(
-            details.focalPoint - _updateSlidePageStartingOffset,
-            extendedImageGestureState: this);
+        widget.extendedImageSlidePageState
+            ?._slide(details.focalPoint - _updateSlidePageStartingOffset);
       }
     }
 
@@ -231,11 +228,12 @@ class _ExtendedImageGestureState extends State<ExtendedImageGesture>
   }
 
   void _handleScaleEnd(ScaleEndDetails details) {
+    widget.extendedImageSlidePageState?._touching = false;
     if (widget.extendedImageSlidePageState != null &&
         widget.extendedImageSlidePageState.isSliding) {
       _updateSlidePageStartingOffset = null;
       // _updateSlidePageImageStartingOffset = null;
-      widget.extendedImageSlidePageState.endSlide();
+      widget.extendedImageSlidePageState?._endSlide();
       return;
     }
     //animate back to maxScale if gesture exceeded the maxScale specified
@@ -298,7 +296,8 @@ class _ExtendedImageGestureState extends State<ExtendedImageGesture>
     _pointerDownPosition = pointerDownEvent.position;
 
     _gestureAnimation.stop();
-
+    widget.extendedImageSlidePageState?.slidePageController
+        ?._attachExtendedImageGestureState(this);
     _pageViewState?.extendedImageGestureState = this;
   }
 
@@ -331,8 +330,7 @@ class _ExtendedImageGestureState extends State<ExtendedImageGesture>
 
     if (widget.extendedImageSlidePageState != null) {
       image = widget.extendedImageState.imageWidget?.heroBuilderForSlidingPage
-              ?.call(image) ??
-          image;
+              ?.call(image) ?? image;
       if (widget.extendedImageSlidePageState.widget.slideType ==
           SlideType.onlyImage) {
         var extendedImageSlidePageState = widget.extendedImageSlidePageState;
@@ -364,6 +362,7 @@ class _ExtendedImageGestureState extends State<ExtendedImageGesture>
 
   @override
   GestureDetails get gestureDetails => _gestureDetails;
+
   @override
   set gestureDetails(GestureDetails value) {
     if (mounted) {

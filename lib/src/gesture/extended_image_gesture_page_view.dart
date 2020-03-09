@@ -1,6 +1,4 @@
-import 'package:extended_image/extended_image.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+part of 'extended_gesture.dart';
 
 ///
 ///  extended_image_view.dart
@@ -144,10 +142,13 @@ class ExtendedImageGesturePageViewState
   Map<Type, GestureRecognizerFactory> _gestureRecognizers =
       const <Type, GestureRecognizerFactory>{};
   GestureAnimation _gestureAnimation;
+
   ScrollPosition get position => pageController.position;
+
   PageController get pageController => widget.controller;
 
   ExtendedImageGestureState extendedImageGestureState;
+
   @override
   void initState() {
     super.initState();
@@ -155,9 +156,10 @@ class ExtendedImageGesturePageViewState
       var gestureDetails = extendedImageGestureState?.gestureDetails;
       if (gestureDetails != null) {
         extendedImageGestureState?.gestureDetails = GestureDetails(
-            offset: value,
-            totalScale: gestureDetails.totalScale,
-            gestureDetails: gestureDetails);
+          offset: value,
+          totalScale: gestureDetails.totalScale,
+          gestureDetails: gestureDetails,
+        );
       }
     });
     _initGestureRecognizers();

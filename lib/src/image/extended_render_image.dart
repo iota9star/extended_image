@@ -1,7 +1,8 @@
 import 'dart:math';
+
 import 'package:extended_image/src/editor/extended_image_editor_utils.dart';
-import 'package:extended_image/src/gesture/extended_image_gesture_utils.dart';
 import 'package:extended_image/src/extended_image_typedef.dart';
+import 'package:extended_image/src/gesture/extended_gesture.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui show Image;

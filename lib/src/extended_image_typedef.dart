@@ -1,10 +1,9 @@
-import 'package:extended_image/src/extended_image_utils.dart';
-import 'package:extended_image/src/gesture/extended_image_gesture_utils.dart';
-import 'package:flutter/material.dart';
 import 'dart:ui' as ui show Image;
 
-import 'editor/extended_image_editor_utils.dart';
-import 'gesture/extended_image_slide_page.dart';
+import 'package:extended_image/src/editor/extended_image_editor_utils.dart';
+import 'package:extended_image/src/extended_image_utils.dart';
+import 'package:extended_image/src/gesture/extended_gesture.dart';
+import 'package:flutter/material.dart';
 
 ///
 ///  extended_image_typedef.dart
@@ -31,11 +30,11 @@ typedef GestureScaleAnimationCallBack = void Function(double scale);
 typedef DoubleTap = void Function(ExtendedImageGestureState state);
 
 /// build page background when slide page
-typedef SlidePageBackgroundHandler = Color Function(
-    Offset offset, Size pageSize);
+typedef SlidePageBackgroundHandler = Widget Function(
+    Widget child, bool isPoping, Offset offset, Size pageSize);
 
 /// customize offset of page when slide page
-typedef SlideOffsetHanlder = Offset Function(Offset offset);
+typedef SlideOffsetHandler = Offset Function(Offset offset);
 
 ///if return true ,pop page
 ///else reset page state
@@ -67,11 +66,15 @@ typedef BuildGestureImage = Widget Function(GestureDetails gestureDetails);
 typedef InitEditorConfigHandler = EditorConfig Function(
     ExtendedImageState state);
 
-///get eidtor mask color base on pointerDown
-typedef EidtorMaskColorHandler = Color Function(
+///get editor mask color base on pointerDown
+typedef EditorMaskColorHandler = Color Function(
     BuildContext context, bool pointerDown);
 
 ///build Hero only for sliding page
-///the transfrom of sliding page must be working on Hero
+///the transform of sliding page must be working on Hero
 ///so that Hero animation wouldn't be strange when pop page
 typedef HeroBuilderForSlidingPage = Widget Function(Widget widget);
+
+///when slide end will auto slide back state.
+typedef WillSlideBackEndStateHandler = Sliding Function(
+    Offset currentOffset, double currentScale);

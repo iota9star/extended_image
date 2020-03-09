@@ -1,8 +1,4 @@
-import 'package:flutter/material.dart';
-
-import '../extended_image_typedef.dart';
-import 'extended_image_gesture_utils.dart';
-import 'extended_image_slide_page_handler.dart';
+part of 'extended_gesture.dart';
 
 enum SlideAxis {
   both,
@@ -15,48 +11,31 @@ enum SlideType {
   onlyImage,
 }
 
+const _defaultSlideBackDuration = const Duration(milliseconds: 360);
+
 class ExtendedImageSlidePage extends StatefulWidget {
   ///The [child] contained by the ExtendedImageGesturePage.
   final Widget child;
-
-  ///builder background when slide page
-  final SlidePageBackgroundHandler slidePageBackgroundHandler;
-
-  ///customize scale of page when slide page
-  final SlideScaleHandler slideScaleHandler;
-
-  ///customize offset when slide page
-  final SlideOffsetHanlder slideOffsetHandler;
-
-  ///call back of slide end
-  ///decide whether pop page
-  final SlideEndHandler slideEndHandler;
 
   ///axis of slide
   ///both,horizontal,vertical
   final SlideAxis slideAxis;
 
-  ///reset page position when slide end(not pop page)
-  final Duration resetPageDuration;
-
   /// slide whole page or only image
   final SlideType slideType;
 
-  /// on sliding page
-  final OnSlidingPage onSlidingPage;
+  final SlidePageController slidePageController;
 
   ExtendedImageSlidePage({
     this.child,
-    this.slidePageBackgroundHandler,
-    this.slideScaleHandler,
-    this.slideOffsetHandler,
-    this.slideEndHandler,
+    SlidePageController slidePageController,
     this.slideAxis: SlideAxis.both,
-    this.resetPageDuration: const Duration(milliseconds: 500),
     this.slideType: SlideType.onlyImage,
-    this.onSlidingPage,
     Key key,
-  }) : super(key: key);
+  })  : this.slidePageController =
+            slidePageController ?? SlidePageController._default(),
+        super(key: key);
+
   @override
   ExtendedImageSlidePageState createState() => ExtendedImageSlidePageState();
 }
@@ -68,135 +47,79 @@ class ExtendedImageSlidePageState extends State<ExtendedImageSlidePage>
   ///whether is sliding page
   bool get isSliding => _isSliding;
 
+  bool _touching = false;
+
+  bool get touching => _touching;
+
   Size _pageSize;
+
   Size get pageSize => _pageSize ?? context.size;
 
-  AnimationController _backAnimationController;
-  AnimationController get backAnimationController => _backAnimationController;
-  Animation<Offset> _backOffsetAnimation;
-  Animation<Offset> get backOffsetAnimation => _backOffsetAnimation;
-  Animation<double> _backScaleAnimation;
-  Animation<double> get backScaleAnimation => _backScaleAnimation;
+  AnimationController _slideAnimationController;
+
+  AnimationController get slideAnimationController => _slideAnimationController;
+  Animation<Offset> _slideOffsetAnimation;
+
+  Animation<Offset> get slideOffsetAnimation => _slideOffsetAnimation;
+  Animation<double> _slideScaleAnimation;
+
+  Animation<double> get slideScaleAnimation => _slideScaleAnimation;
   Offset _offset = Offset.zero;
-  Offset get offset => _backAnimationController.isAnimating
-      ? _backOffsetAnimation.value
+
+  Offset get offset => _slideAnimationController.isAnimating
+      ? _slideOffsetAnimation.value
       : _offset;
+
   double _scale = 1.0;
-  double get scale =>
-      _backAnimationController.isAnimating ? backScaleAnimation.value : _scale;
-  bool _poping = false;
+
+  double get scale => _slideAnimationController.isAnimating
+      ? slideScaleAnimation.value
+      : _scale;
+  bool _popping = false;
+
+  SlidePageController get slidePageController {
+    assert(mounted, "ExtendedImageSlidePageState is not currently in a tree.");
+    return widget.slidePageController;
+  }
 
   @override
   void initState() {
     super.initState();
-    _backAnimationController =
-        AnimationController(vsync: this, duration: widget.resetPageDuration);
-    _backAnimationController.addListener(_backAnimation);
+    _slideAnimationController =
+        AnimationController(vsync: this, duration: _defaultSlideBackDuration);
+    _slideAnimationController.addListener(_slideAnimation);
+    slidePageController?._attachExtendedImageSlidePageState(this);
   }
 
-  @override
-  void didUpdateWidget(ExtendedImageSlidePage oldWidget) {
-    if (oldWidget.resetPageDuration != widget.resetPageDuration) {
-      _backAnimationController.stop();
-      _backAnimationController.dispose();
-      _backAnimationController =
-          AnimationController(vsync: this, duration: widget.resetPageDuration);
-    }
-    super.didUpdateWidget(oldWidget);
-  }
-
-  ExtendedImageGestureState _extendedImageGestureState;
-  ExtendedImageSlidePageHandlerState _extendedImageSlidePageHandlerState;
-  void _backAnimation() {
+  void _slideAnimation() {
     if (mounted) {
       setState(() {
-        if (_backAnimationController.isCompleted) _isSliding = false;
+        if (_slideAnimationController.isCompleted) _isSliding = false;
       });
     }
     if (widget.slideType == SlideType.onlyImage) {
-      _extendedImageGestureState?.slide();
-      _extendedImageSlidePageHandlerState?.slide();
+      slidePageController?._extendedImageGestureState?.slide();
+      slidePageController?._extendedImageSlidePageHandlerState?.slide();
     }
-    widget.onSlidingPage?.call(this);
+    slidePageController?.onSlidingPage?.call(this);
   }
 
   @override
   void dispose() {
+    _slideAnimationController.removeListener(_slideAnimation);
+    _slideAnimationController.dispose();
+    widget.slidePageController._dispose();
     super.dispose();
-    _backAnimationController.removeListener(_backAnimation);
-    _backAnimationController.dispose();
-  }
-
-  void slide(Offset value,
-      {ExtendedImageGestureState extendedImageGestureState,
-      ExtendedImageSlidePageHandlerState extendedImageSlidePageHandlerState}) {
-    if (_backAnimationController.isAnimating) return;
-    _offset = value;
-    if (widget.slideAxis == SlideAxis.horizontal) {
-      _offset = Offset(value.dx, 0.0);
-    } else if (widget.slideAxis == SlideAxis.vertical) {
-      _offset = Offset(0.0, value.dy);
-    }
-    _offset = widget.slideOffsetHandler?.call(_offset) ?? _offset;
-
-    _scale = widget.slideScaleHandler?.call(_offset) ??
-        defaultSlideScaleHandler(
-            offset: _offset,
-            pageSize: pageSize,
-            pageGestureAxis: widget.slideAxis);
-    _isSliding = true;
-
-    if (widget.slideType == SlideType.onlyImage) {
-      _extendedImageGestureState = extendedImageGestureState;
-      _extendedImageGestureState?.slide();
-      _extendedImageSlidePageHandlerState = extendedImageSlidePageHandlerState;
-      _extendedImageSlidePageHandlerState?.slide();
-    }
-
-    if (mounted) {
-      setState(() {});
-    }
-    widget.onSlidingPage?.call(this);
-  }
-
-  void endSlide() {
-    if (mounted && _isSliding) {
-      var popPage = widget.slideEndHandler?.call(_offset) ??
-          defaultSlideEndHandler(
-              offset: _offset,
-              pageSize: _pageSize,
-              pageGestureAxis: widget.slideAxis);
-
-      if (popPage) {
-        setState(() {
-          _poping = true;
-          _isSliding = false;
-        });
-        Navigator.pop(context);
-      } else {
-        _backOffsetAnimation = _backAnimationController
-            .drive(Tween<Offset>(begin: _offset, end: Offset.zero));
-        _backScaleAnimation = _backAnimationController
-            .drive(Tween<double>(begin: _scale, end: 1.0));
-        _offset = Offset.zero;
-        _scale = 1.0;
-        _backAnimationController.reset();
-        _backAnimationController.forward();
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    // 这部分需要重新考虑下
+    if (widget.slideType == SlideType.onlyImage) {
+      slidePageController?._extendedImageGestureState?.slide();
+      slidePageController?._extendedImageSlidePageHandlerState?.slide();
+    }
     _pageSize = MediaQuery.of(context).size;
-    final Color pageColor =
-        widget.slidePageBackgroundHandler?.call(offset, pageSize) ??
-            defaultSlidePageBackgroundHandler(
-                offset: offset,
-                pageSize: pageSize,
-                color: Theme.of(context).dialogBackgroundColor,
-                pageGestureAxis: widget.slideAxis);
-
     Widget result = widget.child;
     if (widget.slideType == SlideType.wholePage) {
       result = Transform.translate(
@@ -207,11 +130,16 @@ class ExtendedImageSlidePageState extends State<ExtendedImageSlidePage>
         ),
       );
     }
-
-    result = Container(
-      color: _poping ? Colors.transparent : pageColor,
-      child: result,
-    );
+    result = slidePageController?.slidePageBackgroundHandler
+            ?.call(result, _popping, offset, pageSize) ??
+        defaultSlidePageBackgroundHandler(
+          child: result,
+          isPop: _popping,
+          offset: offset,
+          pageSize: pageSize,
+          color: Theme.of(context).dialogBackgroundColor,
+          pageGestureAxis: widget.slideAxis,
+        );
 
 //    result = IgnorePointer(
 //      ignoring: _isSliding,
@@ -221,9 +149,192 @@ class ExtendedImageSlidePageState extends State<ExtendedImageSlidePage>
     return result;
   }
 
+  void _slide(Offset value) {
+    if (_slideAnimationController.isAnimating) return;
+    _offset = value;
+    if (widget.slideAxis == SlideAxis.horizontal) {
+      _offset = Offset(value.dx, 0.0);
+    } else if (widget.slideAxis == SlideAxis.vertical) {
+      _offset = Offset(0.0, value.dy);
+    }
+    _offset = _handleSlideOffset(_offset);
+    _scale = _handleSlideScale(_offset);
+    _isSliding = true;
+    if (mounted) {
+      setState(() {});
+    }
+    slidePageController?.onSlidingPage?.call(this);
+  }
+
+  Offset _handleSlideOffset(Offset offset) =>
+      slidePageController?.slideOffsetHandler?.call(offset) ?? offset;
+
+  double _handleSlideScale(Offset offset) {
+    return slidePageController?.slideScaleHandler?.call(offset) ??
+        defaultSlideScaleHandler(
+          offset: offset,
+          pageSize: pageSize,
+          pageGestureAxis: widget.slideAxis,
+        );
+  }
+
+  void _animateSlideTo(Offset endOffset, double endScale, Duration duration) {
+    if (_slideAnimationController.duration != duration) {
+      if (_slideAnimationController.isAnimating) {
+        _slideAnimationController.stop();
+      }
+      _slideAnimationController.duration = duration;
+    }
+    _slideOffsetAnimation = _slideAnimationController
+        .drive(Tween<Offset>(begin: _offset, end: endOffset));
+    _slideScaleAnimation = _slideAnimationController
+        .drive(Tween<double>(begin: _scale, end: endScale));
+    _offset = endOffset;
+    _scale = endScale;
+    _slideAnimationController.reset();
+    _slideAnimationController.forward();
+  }
+
+  void _endSlide() {
+    if (mounted && _isSliding) {
+      var popPage = slidePageController?.slideEndHandler?.call(_offset) ??
+          defaultSlideEndHandler(
+            offset: _offset,
+            pageSize: _pageSize,
+            pageGestureAxis: widget.slideAxis,
+          );
+
+      if (popPage) {
+        setState(() {
+          _popping = true;
+          _isSliding = false;
+        });
+        Navigator.pop(context);
+      } else {
+        var endState = slidePageController?.willSlideBackEndStateHandler
+            ?.call(_offset, _scale);
+
+        _animateSlideTo(endState.offset ?? Offset.zero, endState.scale ?? 1.0,
+            endState.duration ?? _defaultSlideBackDuration);
+      }
+    }
+  }
+
   void popPage() {
     setState(() {
-      _poping = true;
+      _popping = true;
     });
   }
+}
+
+class SlidePageController {
+  ExtendedImageSlidePageState _extendedImageSlidePageState;
+  ExtendedImageGestureState _extendedImageGestureState;
+  ExtendedImageSlidePageHandlerState _extendedImageSlidePageHandlerState;
+
+  ///builder background when slide page
+  final SlidePageBackgroundHandler slidePageBackgroundHandler;
+
+  ///customize scale of page when slide page
+  final SlideScaleHandler slideScaleHandler;
+
+  ///customize offset when slide page
+  final SlideOffsetHandler slideOffsetHandler;
+
+  ///call back of slide end
+  ///decide whether pop page
+  final SlideEndHandler slideEndHandler;
+
+  /// on sliding page
+  final OnSlidingPage onSlidingPage;
+
+  final WillSlideBackEndStateHandler willSlideBackEndStateHandler;
+
+  SlidePageController._default({
+    this.slidePageBackgroundHandler,
+    this.slideScaleHandler,
+    this.slideOffsetHandler,
+    this.slideEndHandler,
+    this.onSlidingPage,
+    this.willSlideBackEndStateHandler,
+  });
+
+  SlidePageController({
+    this.slidePageBackgroundHandler,
+    this.slideScaleHandler,
+    this.slideOffsetHandler,
+    this.slideEndHandler,
+    this.onSlidingPage,
+    this.willSlideBackEndStateHandler,
+  });
+
+  void _attachExtendedImageSlidePageState(
+    final ExtendedImageSlidePageState extendedImageSlidePageState,
+  ) {
+    this._extendedImageSlidePageState = extendedImageSlidePageState;
+  }
+
+  void _attachExtendedImageGestureState(
+    final ExtendedImageGestureState _extendedImageGestureState,
+  ) {
+    this._extendedImageGestureState = _extendedImageGestureState;
+  }
+
+  void _attachExtendedImageSlidePageHandlerState(
+    final ExtendedImageSlidePageHandlerState extendedImageSlidePageHandlerState,
+  ) {
+    this._extendedImageSlidePageHandlerState =
+        extendedImageSlidePageHandlerState;
+  }
+
+  void slideTo([Offset offset]) {
+    assert(_extendedImageSlidePageState != null,
+        "ExtendedImageSlidePageState is null.");
+    _extendedImageSlidePageState._slide(offset ?? Offset.zero);
+  }
+
+  void animateSlideTo({
+    Offset offset = Offset.zero,
+    double scale = 1.0,
+    Duration duration = const Duration(milliseconds: 500),
+  }) {
+    assert(_extendedImageSlidePageState != null,
+        "ExtendedImageSlidePageState is null.");
+    _extendedImageSlidePageState._animateSlideTo(offset, scale, duration);
+  }
+
+  bool get isAnimating =>
+      _extendedImageSlidePageState.slideAnimationController.isAnimating;
+
+  double get scale => _extendedImageSlidePageState.scale;
+
+  Offset get offset => _extendedImageSlidePageState.offset;
+
+  bool get isSliding => _extendedImageSlidePageState.isSliding;
+
+  bool get touching => _extendedImageSlidePageState.touching;
+
+  void endSlide() {
+    assert(_extendedImageSlidePageState != null,
+        "ExtendedImageSlidePageState is null.");
+    _extendedImageSlidePageState._endSlide();
+  }
+
+  void _dispose() {
+    _extendedImageGestureState = null;
+    _extendedImageSlidePageHandlerState = null;
+    _extendedImageSlidePageState = null;
+  }
+}
+
+class Sliding {
+  double scale;
+  Offset offset;
+  Duration duration;
+
+  Sliding({
+    this.scale = 1.0,
+    this.offset = Offset.zero,
+    this.duration = _defaultSlideBackDuration,
+  });
 }
